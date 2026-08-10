@@ -145,7 +145,7 @@ export async function login(formData: FormData) {
   cookieStore.delete('auth_user');
   cookieStore.delete('auth_user_phone');
 
-  redirect('/');
+  return { success: true };
 }
 
 export async function logout() {
