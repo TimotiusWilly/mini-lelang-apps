@@ -49,3 +49,64 @@ export async function approveWinner(commentId: string) {
 
   return { success: true };
 }
+
+export async function addPost(formData: FormData) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Unauthorized' };
+  }
+
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const basePrice = Number(formData.get('basePrice'));
+  const file = formData.get('image') as File;
+
+  if (!title || !file || file.size === 0) {
+    return { error: 'Judul dan Foto wajib diisi' };
+  }
+
+  try {
+    // 1. Upload File to Supabase Storage
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error: uploadError } = await supabase.storage
+      .from('lelang-images')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) {
+      return { error: `Gagal upload gambar: ${uploadError.message}` };
+    }
+
+    // 2. Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('lelang-images')
+      .getPublicUrl(fileName);
+
+    // 3. Insert Post to Database
+    const { error: dbError } = await supabase
+      .from('posts')
+      .insert([{
+        title,
+        description: description || '',
+        base_price: basePrice || 0,
+        image_url: publicUrl,
+        status: 'OPEN'
+      }]);
+
+    if (dbError) {
+      return { error: `Gagal menyimpan data: ${dbError.message}` };
+    }
+
+    revalidatePath('/');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || 'Terjadi kesalahan sistem' };
+  }
+}

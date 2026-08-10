@@ -2,13 +2,35 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { updatePost } from '@/app/actions/admin';
+import { updatePost, addPost } from '@/app/actions/admin';
 import { Save, Loader2 } from 'lucide-react';
 
 export default function AdminInventory({ initialPosts }: { initialPosts: any[] }) {
   const [posts, setPosts] = useState(initialPosts);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsUploading(true);
+    const formData = new FormData(e.currentTarget);
+    try {
+      const res = await addPost(formData);
+      if (res.error) {
+        alert(res.error);
+      } else {
+        alert('Barang berhasil ditambahkan!');
+        setIsAdding(false);
+        window.location.reload(); // Refresh the page to show the new item from DB
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat upload');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleUpdate = async (postId: string, title: string, price: number) => {
     setSavingId(postId);
@@ -47,7 +69,15 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <h2 className="text-xl font-bold">Kelola Barang</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <h2 className="text-xl font-bold">Kelola Barang</h2>
+          <button 
+            onClick={() => setIsAdding(!isAdding)} 
+            className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity"
+          >
+            {isAdding ? 'Batal Tambah' : '+ Tambah Barang Baru'}
+          </button>
+        </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           {/* Search Bar */}
@@ -71,6 +101,38 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
           </div>
         </div>
       </div>
+
+      {isAdding && (
+        <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 md:p-6 mb-6">
+          <h3 className="font-bold text-lg mb-4">Tambah Barang Baru</h3>
+          <form onSubmit={handleAddSubmit} className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nama Barang *</label>
+                <input type="text" name="title" required className="w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-black dark:focus:border-white transition-colors" placeholder="Contoh: Hotwheels Nissan GTR" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Harga Awal (Rp) *</label>
+                <input type="number" name="basePrice" required className="w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-black dark:focus:border-white transition-colors" placeholder="Contoh: 150000" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Upload Foto *</label>
+              <input type="file" name="image" accept="image/*" required className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Deskripsi (Opsional)</label>
+              <textarea name="description" rows={2} className="w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-black dark:focus:border-white transition-colors" placeholder="Contoh: Kondisi mulus, minus box agak penyok..."></textarea>
+            </div>
+            <div className="flex justify-end mt-2">
+              <button type="submit" disabled={isUploading} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2">
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isUploading ? 'Mengupload...' : 'Upload & Simpan Barang'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       <div className="w-full overflow-x-auto scroll-smooth custom-scrollbar-top" style={{ transform: 'rotateX(180deg)' }}>
         <div className="inline-block min-w-full max-h-[70vh] overflow-y-auto" style={{ transform: 'rotateX(180deg)' }}>
           <table className="w-full min-w-[800px] text-left text-sm border-collapse">
