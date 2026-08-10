@@ -82,7 +82,7 @@ export default async function Home() {
             Stock Hotwheels By Willy
           </h2>
           <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
-            Harga Hotwheels yang tertera sudah NET, sudah dipastikan harga sudah murah dan cocok untuk di resell oleh kalian! SAY NO TO BNR.
+            Harga Hotwheels yang tertera sudah pasti murah dan cocok untuk di resell oleh kalian, try sesuka kalian! SAY NO TO BNR.
           </p>
         </section>
 
