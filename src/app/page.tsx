@@ -19,8 +19,39 @@ export default async function Home() {
     .select('*')
     .order('created_at', { ascending: false });
 
+  // Fetch comments to determine booked status
+  const { data: allComments } = await supabase
+    .from('comments')
+    .select('post_id, content, is_winner, created_at')
+    .order('created_at', { ascending: true }); // ASC to find the first booker
+
+  const postWinners = new Set();
+  
+  for (const c of (allComments || [])) {
+    const content = (c.content || '').toLowerCase();
+    const isBook = /\b(book|buk|b)\b/.test(content);
+    if (isBook || c.is_winner) {
+      postWinners.add(c.post_id);
+    }
+  }
+
+  // Enhance posts with dynamic status and sort them
+  const enhancedPosts = (posts || [])
+    .map(p => ({
+      ...p,
+      status: postWinners.has(p.id) ? 'BOOKED' : 'OPEN'
+    }))
+    .sort((a, b) => {
+      // If both have the same status, maintain the original created_at descending order
+      if (a.status === b.status) {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      // Put BOOKED at the bottom (1) and OPEN at the top (-1)
+      return a.status === 'BOOKED' ? 1 : -1;
+    });
+
   // Fallback dummy data if no data in supabase
-  const displayPosts = posts && posts.length > 0 ? posts : [];
+  const displayPosts = enhancedPosts;
 
   return (
     <GridBackground>
