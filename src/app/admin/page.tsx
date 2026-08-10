@@ -24,7 +24,6 @@ export default async function AdminDashboard() {
   const { data: comments, error: commentsError } = await supabase
     .from('comments')
     .select('*, posts(title, image_url, base_price)')
-    .or('content.ilike.%book%,content.ilike.%buk%,content.ilike.%b%,content.ilike.%nego%,content.ilike.%try%')
     .order('created_at', { ascending: false });
 
   return (

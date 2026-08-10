@@ -24,7 +24,7 @@ export default function AdminBookings({ initialBookings, mode = 'book' }: { init
           
           const content = newComment.content.toLowerCase();
           const isBook = /\b(book|buk|b)\b/.test(content);
-          const isNego = content.includes('nego') || content.includes('try');
+          const isNego = !isBook && (content.includes('nego') || content.includes('try') || /\d+/.test(content));
 
           // Track both book and nego/try comments globally
           if (isBook || isNego) {
@@ -77,7 +77,7 @@ export default function AdminBookings({ initialBookings, mode = 'book' }: { init
   const filteredBookings = bookings.filter((booking) => {
     const content = (booking.content || '').toLowerCase();
     const isBook = /\b(book|buk|b)\b/.test(content);
-    const isNego = content.includes('nego') || content.includes('try');
+    const isNego = !isBook && (content.includes('nego') || content.includes('try') || /\d+/.test(content));
     const matchesMode = mode === 'book' ? isBook : isNego;
 
     if (!matchesMode) return false;

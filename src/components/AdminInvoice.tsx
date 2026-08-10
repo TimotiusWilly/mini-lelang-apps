@@ -64,7 +64,7 @@ export default function AdminInvoice({ initialBookings }: { initialBookings: any
       if (postWinners.get(booking.post_id) === booking.id) {
         const content = (booking.content || '').toLowerCase();
         const isBook = /\b(book|buk|b)\b/.test(content);
-        const isNego = content.includes('nego') || content.includes('try');
+        const isNego = !isBook && (content.includes('nego') || content.includes('try') || /\d+/.test(content));
         let finalPrice = booking.posts?.base_price || 0;
         
         if (!isBook && isNego) {
