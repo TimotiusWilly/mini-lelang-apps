@@ -22,14 +22,43 @@ export default async function MyInvoicePage() {
     .eq('user_name', userName)
     .order('created_at', { ascending: false });
 
-  // Filter hanya barang yang dimenangkan (book atau nego/try yang disetujui)
-  const confirmedItems = (rawBookings || []).reduce((acc: any[], booking: any) => {
-    const content = (booking.content || '').toLowerCase();
-    const isBook = /\b(book|buk|b)\b/.test(content);
-    const isNego = content.includes('nego') || content.includes('try');
+  // 1. Dapatkan daftar post_id yang dikomentari oleh user
+  const postIds = Array.from(new Set((rawBookings || []).map((b: any) => b.post_id)));
 
-    // Termasuk jika book atau jika nego/try DAN is_winner = true
-    if (isBook || (isNego && booking.is_winner)) {
+  // 2. Ambil SEMUA komentar untuk barang-barang tersebut untuk mencari siapa yang nge-book PERTAMA
+  let postWinners = new Map(); // post_id -> winning_comment_id
+  
+  if (postIds.length > 0) {
+    const { data: allComments } = await supabase
+      .from('comments')
+      .select('id, post_id, content, created_at, is_winner')
+      .in('post_id', postIds)
+      .order('created_at', { ascending: true }); // Urutkan dari yang paling lama (pertama)
+
+    // 3. Tentukan pemenang untuk setiap barang
+    for (const c of (allComments || [])) {
+      const content = (c.content || '').toLowerCase();
+      const isBook = /\b(book|buk|b)\b/.test(content);
+      
+      // Jika ini komentar book, dan belum ada pemenang untuk barang ini, maka dia menang
+      if (isBook && !postWinners.has(c.post_id)) {
+        postWinners.set(c.post_id, c.id);
+      }
+      
+      // Override: Jika admin secara manual memilih pemenang (is_winner = true)
+      if (c.is_winner) {
+        postWinners.set(c.post_id, c.id);
+      }
+    }
+  }
+
+  // 4. Filter komentar user, HANYA masukkan jika komentar dia adalah komentar yang menang
+  const confirmedItems = (rawBookings || []).reduce((acc: any[], booking: any) => {
+    // Cek apakah komentar ini adalah pemenangnya
+    if (postWinners.get(booking.post_id) === booking.id) {
+      const content = (booking.content || '').toLowerCase();
+      const isBook = /\b(book|buk|b)\b/.test(content);
+      const isNego = content.includes('nego') || content.includes('try');
       let finalPrice = booking.posts?.base_price || 0;
 
       if (!isBook && isNego) {

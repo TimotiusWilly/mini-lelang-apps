@@ -42,31 +42,41 @@ export default function AdminInvoice({ initialBookings }: { initialBookings: any
   }, []);
 
   const confirmedItems = useMemo(() => {
-    return bookings.reduce((acc: any[], booking) => {
-      const content = (booking.content || '').toLowerCase();
+    // Urutkan semua booking dari yang paling awal (terlama) untuk mencari siapa yang pertama book
+    const sortedBookings = [...bookings].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    
+    const postWinners = new Map(); // post_id -> winning_comment_id
+    
+    for (const c of sortedBookings) {
+      const content = (c.content || '').toLowerCase();
       const isBook = /\b(book|buk|b)\b/.test(content);
-      const isNego = content.includes('nego') || content.includes('try');
       
-      // Include if it's book OR if it's nego/try AND confirmed (is_winner)
-      if (isBook || (isNego && booking.is_winner)) {
+      if (isBook && !postWinners.has(c.post_id)) {
+        postWinners.set(c.post_id, c.id);
+      }
+      if (c.is_winner) {
+        postWinners.set(c.post_id, c.id); // Admin override
+      }
+    }
+
+    return bookings.reduce((acc: any[], booking) => {
+      // HANYA proses jika booking ini adalah pemenangnya
+      if (postWinners.get(booking.post_id) === booking.id) {
+        const content = (booking.content || '').toLowerCase();
+        const isBook = /\b(book|buk|b)\b/.test(content);
+        const isNego = content.includes('nego') || content.includes('try');
         let finalPrice = booking.posts?.base_price || 0;
         
         if (!isBook && isNego) {
-          // Parse price from try/nego string
-          // Matches patterns like "50", "50k", "50.000", "50 k", "50,000"
           const match = content.match(/(\d+(?:[.,]\d+)*)\s*(k)?/);
           if (match) {
-            const numStr = match[1].replace(/[,.]/g, ''); // Remove all dots/commas
+            const numStr = match[1].replace(/[,.]/g, '');
             let num = parseInt(numStr, 10);
-            
             if (match[2] === 'k') {
               num *= 1000;
             } else if (num > 0 && num <= 1000) {
-              // If user inputs "50" without "k" but it's small, they likely meant 50,000
               num *= 1000;
             }
-            
-            // Override the final price with the parsed value
             finalPrice = num;
           }
         }
