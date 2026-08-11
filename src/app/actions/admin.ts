@@ -38,9 +38,44 @@ export async function approveWinner(commentId: string) {
     return { error: 'Unauthorized' };
   }
 
+  // Find the comment first to get its post_id
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('post_id')
+    .eq('id', commentId)
+    .single();
+
+  if (fetchError || !comment) {
+    return { error: fetchError?.message || 'Comment not found' };
+  }
+
+  // Reset all comments for this post so there is only one winner
+  await supabase
+    .from('comments')
+    .update({ is_winner: false })
+    .eq('post_id', comment.post_id);
+
   const { error } = await supabase
     .from('comments')
     .update({ is_winner: true })
+    .eq('id', commentId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function revokeWinner(commentId: string) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Unauthorized' };
+  }
+
+  const { error } = await supabase
+    .from('comments')
+    .update({ is_winner: false })
     .eq('id', commentId);
 
   if (error) {

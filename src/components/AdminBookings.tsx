@@ -189,10 +189,22 @@ export default function AdminBookings({ initialBookings, mode = 'book' }: { init
                     {mode === 'nego' && (
                       <td className="py-4 px-4">
                         {booking.is_winner ? (
-                          <span className="text-green-600 font-bold flex items-center gap-1 whitespace-nowrap text-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            Deal (Pemenang)
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className="text-green-600 font-bold flex items-center gap-1 whitespace-nowrap text-xs">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              Deal (Pemenang)
+                            </span>
+                            <button
+                              onClick={async () => {
+                                const { revokeWinner } = await import('@/app/actions/admin');
+                                const res = await revokeWinner(booking.id);
+                                if (res?.error) alert(res.error);
+                              }}
+                              className="text-red-500 hover:text-red-700 text-[10px] underline"
+                            >
+                              Batal
+                            </button>
+                          </div>
                         ) : (
                           <button
                             onClick={async () => {
