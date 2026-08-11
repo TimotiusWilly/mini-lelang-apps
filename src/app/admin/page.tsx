@@ -26,6 +26,21 @@ export default async function AdminDashboard() {
     .select('*, posts(title, image_url, base_price)')
     .order('created_at', { ascending: false });
 
+  // Determine post status based on bookings (same logic as page.tsx)
+  const postWinners = new Set();
+  for (const c of (comments || [])) {
+    const content = (c.content || '').toLowerCase();
+    const isBook = /\b(book|buk|b)\b/.test(content);
+    if (isBook || c.is_winner) {
+      postWinners.add(c.post_id);
+    }
+  }
+
+  const enhancedPosts = (posts || []).map(p => ({
+    ...p,
+    status: postWinners.has(p.id) ? 'BOOKED' : 'OPEN'
+  }));
+
   return (
     <div className="min-h-screen pb-20 bg-gray-50 dark:bg-[#0a0a0a]">
       {/* Admin Header */}
@@ -53,7 +68,7 @@ export default async function AdminDashboard() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <AdminTabs
-          initialPosts={posts || []}
+          initialPosts={enhancedPosts}
           initialBookings={comments || []}
         />
       </main>

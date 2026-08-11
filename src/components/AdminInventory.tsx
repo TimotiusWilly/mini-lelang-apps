@@ -9,6 +9,7 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
   const [posts, setPosts] = useState(initialPosts);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'READY' | 'BOOKED'>('ALL');
   const [isAdding, setIsAdding] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -57,31 +58,62 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
     }));
   };
 
-  const filteredPosts = posts.filter(post => 
-    post.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = 
+      statusFilter === 'ALL' ? true :
+      statusFilter === 'READY' ? post.status === 'OPEN' :
+      post.status === 'BOOKED';
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPrice = filteredPosts.reduce((sum, post) => sum + (Number(post.base_price) || 0), 0);
   const formattedTotal = new Intl.NumberFormat('id-ID', {
     style: 'currency', currency: 'IDR', minimumFractionDigits: 0
   }).format(totalPrice);
 
+  const readyCount = posts.filter(p => p.status === 'OPEN').length;
+  const bookedCount = posts.filter(p => p.status === 'BOOKED').length;
+
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <h2 className="text-xl font-bold">Kelola Barang</h2>
-          <button 
-            onClick={() => setIsAdding(!isAdding)} 
-            className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity"
-          >
-            {isAdding ? 'Batal Tambah' : '+ Tambah Barang Baru'}
-          </button>
+      <div className="flex flex-col mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <h2 className="text-xl font-bold">Kelola Barang</h2>
+            <button 
+              onClick={() => setIsAdding(!isAdding)} 
+              className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity"
+            >
+              {isAdding ? 'Batal Tambah' : '+ Tambah Barang Baru'}
+            </button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            {/* Stat Cards */}
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-2 rounded-lg border border-green-200 dark:border-green-900/50 flex-1 sm:flex-none text-center">
+                <div className="text-xs font-semibold uppercase tracking-wider">Ready</div>
+                <div className="text-lg font-black leading-none mt-1">{readyCount}</div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900/50 flex-1 sm:flex-none text-center">
+                <div className="text-xs font-semibold uppercase tracking-wider">Terjual</div>
+                <div className="text-lg font-black leading-none mt-1">{bookedCount}</div>
+              </div>
+            </div>
+            
+            {/* Total Value */}
+            <div className="bg-white dark:bg-gray-900 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm flex items-center shrink-0 w-full sm:w-auto justify-between sm:justify-center">
+              <span className="text-gray-500 text-xs font-medium mr-2">Total Nilai:</span>
+              <span className="font-black text-black dark:text-white text-base">{formattedTotal}</span>
+            </div>
+          </div>
         </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
           {/* Search Bar */}
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-96">
             <input
               type="text"
               placeholder="Cari nama barang..."
@@ -94,10 +126,17 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
             </svg>
           </div>
 
-          {/* Total Value */}
-          <div className="bg-white dark:bg-gray-900 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm flex items-center shrink-0 w-full sm:w-auto justify-between sm:justify-start">
-            <span className="text-gray-500 text-sm font-medium mr-3">Total Nilai:</span>
-            <span className="font-black text-green-600 dark:text-green-400 text-lg">{formattedTotal}</span>
+          {/* Status Filter */}
+          <div className="w-full sm:w-48">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'ALL' | 'READY' | 'BOOKED')}
+              className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-sm cursor-pointer"
+            >
+              <option value="ALL">Semua Status</option>
+              <option value="READY">Hanya Ready</option>
+              <option value="BOOKED">Hanya Terjual/Booked</option>
+            </select>
           </div>
         </div>
       </div>
@@ -140,6 +179,7 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
             <tr className="text-gray-500">
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Barang</th>
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Nama (Bisa diedit)</th>
+              <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Status</th>
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Harga (Bisa diedit)</th>
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap w-24">Aksi</th>
             </tr>
@@ -172,6 +212,17 @@ export default function AdminInventory({ initialPosts }: { initialPosts: any[] }
                       onChange={(e) => handleLocalChange(post.id, 'title', e.target.value)}
                       className="w-full bg-transparent border border-gray-300 dark:border-gray-700 rounded px-3 py-1.5 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                     />
+                  </td>
+                  <td className="py-3 px-4">
+                    {post.status === 'OPEN' ? (
+                      <span className="inline-block bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-200 dark:border-green-800">
+                        READY
+                      </span>
+                    ) : (
+                      <span className="inline-block bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-200 dark:border-red-800 uppercase">
+                        TERJUAL
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 px-4 w-48">
                     <div className="relative">
