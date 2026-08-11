@@ -50,6 +50,24 @@ export async function approveWinner(commentId: string) {
   return { success: true };
 }
 
+export async function updateInvoiceStatus(userName: string, isPaid: boolean) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Unauthorized' };
+  }
+
+  const { error } = await supabase
+    .from('comments')
+    .update({ is_paid: isPaid })
+    .eq('user_name', userName);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
 export async function addPost(formData: FormData) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {

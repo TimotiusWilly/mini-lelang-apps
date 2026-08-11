@@ -4,8 +4,12 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
+import { updateInvoiceStatus } from '@/app/actions/admin';
+import { Loader2, CheckCircle, Clock } from 'lucide-react';
+
 export default function AdminInvoice({ initialBookings }: { initialBookings: any[] }) {
   const [bookings, setBookings] = useState(initialBookings);
+  const [loadingUser, setLoadingUser] = useState<string | null>(null);
 
   useEffect(() => {
     const channel = supabase
@@ -89,7 +93,7 @@ export default function AdminInvoice({ initialBookings }: { initialBookings: any
 
   // Group by user
   const groupedByUser = useMemo(() => {
-    const groups: Record<string, { user_name: string; user_phone: string; items: any[]; total: number }> = {};
+    const groups: Record<string, { user_name: string; user_phone: string; items: any[]; total: number; is_paid: boolean }> = {};
     confirmedItems.forEach(item => {
       const key = item.user_phone || item.user_name;
       if (!groups[key]) {
@@ -97,11 +101,15 @@ export default function AdminInvoice({ initialBookings }: { initialBookings: any
           user_name: item.user_name,
           user_phone: item.user_phone,
           items: [],
-          total: 0
+          total: 0,
+          is_paid: false
         };
       }
       groups[key].items.push(item);
       groups[key].total += item.finalPrice;
+      if (item.is_paid) {
+        groups[key].is_paid = true;
+      }
     });
     return Object.values(groups).sort((a, b) => b.total - a.total);
   }, [confirmedItems]);
@@ -112,6 +120,21 @@ export default function AdminInvoice({ initialBookings }: { initialBookings: any
     return new Intl.NumberFormat('id-ID', {
       style: 'currency', currency: 'IDR', minimumFractionDigits: 0
     }).format(price);
+  };
+
+  const handleTogglePaid = async (userName: string, currentStatus: boolean) => {
+    setLoadingUser(userName);
+    try {
+      const res = await updateInvoiceStatus(userName, !currentStatus);
+      if (res.error) {
+        alert('Gagal mengupdate status: ' + res.error);
+      }
+      // If success, Realtime will automatically update the UI
+    } catch (err) {
+      alert('Terjadi kesalahan saat mengupdate status');
+    } finally {
+      setLoadingUser(null);
+    }
   };
 
   return (
@@ -198,8 +221,34 @@ export default function AdminInvoice({ initialBookings }: { initialBookings: any
                       <div className="font-black text-lg text-green-600 dark:text-green-400">
                         {formatPrice(userGroup.total)}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1 uppercase font-semibold">
+                      <div className="text-xs text-gray-400 mt-1 uppercase font-semibold mb-4">
                         {userGroup.items.length} Barang
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-2">
+                        {userGroup.is_paid ? (
+                          <div className="flex items-center gap-1.5 text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-full border border-green-200 dark:border-green-800">
+                            <CheckCircle className="w-4 h-4" />
+                            LUNAS
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-sm font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800">
+                            <Clock className="w-4 h-4" />
+                            BELUM LUNAS
+                          </div>
+                        )}
+                        
+                        <button
+                          onClick={() => handleTogglePaid(userGroup.user_name, userGroup.is_paid)}
+                          disabled={loadingUser === userGroup.user_name}
+                          className="mt-2 text-xs font-semibold underline underline-offset-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors disabled:opacity-50 flex items-center justify-end w-full"
+                        >
+                          {loadingUser === userGroup.user_name ? (
+                            <><Loader2 className="w-3 h-3 animate-spin mr-1" /> Proses...</>
+                          ) : (
+                            userGroup.is_paid ? 'Tandai Belum Lunas' : 'Tandai Lunas'
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>
