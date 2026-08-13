@@ -26,6 +26,12 @@ export default async function AdminDashboard() {
     .select('*, posts(title, image_url, base_price)')
     .order('created_at', { ascending: false });
 
+  // Fetch users for manual selling
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('name, phone')
+    .order('name', { ascending: true });
+
   // Determine post status based on bookings (same logic as page.tsx)
   const postWinners = new Set();
   for (const c of (comments || [])) {
@@ -70,6 +76,7 @@ export default async function AdminDashboard() {
         <AdminTabs
           initialPosts={enhancedPosts}
           initialBookings={comments || []}
+          initialUsers={users || []}
         />
       </main>
     </div>

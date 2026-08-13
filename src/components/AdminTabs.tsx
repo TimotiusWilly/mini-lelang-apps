@@ -8,9 +8,10 @@ import AdminInvoice from './AdminInvoice';
 type AdminTabsProps = {
   initialPosts: any[];
   initialBookings: any[];
+  initialUsers: any[];
 };
 
-export default function AdminTabs({ initialPosts, initialBookings }: AdminTabsProps) {
+export default function AdminTabs({ initialPosts, initialBookings, initialUsers }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<'bookings' | 'nego' | 'inventory' | 'invoice'>('bookings');
 
   return (
@@ -66,7 +67,7 @@ export default function AdminTabs({ initialPosts, initialBookings }: AdminTabsPr
         ) : activeTab === 'invoice' ? (
           <AdminInvoice initialBookings={initialBookings} />
         ) : (
-          <AdminInventory initialPosts={initialPosts} />
+          <AdminInventory initialPosts={initialPosts} initialUsers={initialUsers} />
         )}
       </div>
     </div>

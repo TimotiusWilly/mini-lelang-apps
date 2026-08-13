@@ -163,3 +163,30 @@ export async function addPost(formData: FormData) {
     return { error: err.message || 'Terjadi kesalahan sistem' };
   }
 }
+
+export async function markItemAsSoldManually(postId: string, price: number, userName: string, userPhone: string = '') {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Unauthorized' };
+  }
+
+  const content = `nego ${price} (manual offline)`;
+
+  const { error } = await supabase
+    .from('comments')
+    .insert([{
+      post_id: postId,
+      user_name: userName,
+      user_phone: userPhone,
+      content: content,
+      is_winner: true,
+    }]);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/admin');
+  return { success: true };
+}
