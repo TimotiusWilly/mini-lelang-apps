@@ -1,78 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
-export default function AdminBookings({ initialBookings, mode = 'book' }: { initialBookings: any[], mode?: 'book' | 'nego' }) {
-  const [bookings, setBookings] = useState(initialBookings);
+export default function AdminBookings({ bookings, mode = 'book' }: { bookings: any[], mode?: 'book' | 'nego' }) {
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    // Subscribe to new comments
-    const channel = supabase
-      .channel('admin_bookings')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'comments',
-        },
-        async (payload) => {
-          const newComment = payload.new;
-          
-          const content = newComment.content.toLowerCase();
-          const isBook = /\b(book|buk|b)\b/.test(content);
-          const isNego = !isBook && (content.includes('nego') || content.includes('try') || /\d+/.test(content));
-
-          // Track both book and nego/try comments globally
-          if (isBook || isNego) {
-            // Fetch post details for this comment
-            const { data: postData } = await supabase
-              .from('posts')
-              .select('title, image_url, base_price')
-              .eq('id', newComment.post_id)
-              .single();
-
-            if (postData) {
-              const fullBooking = {
-                ...newComment,
-                posts: postData
-              };
-              setBookings((prev) => [fullBooking, ...prev]);
-            }
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'comments',
-        },
-        (payload) => {
-          setBookings((prev) => prev.filter(b => b.id !== payload.old.id));
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'comments',
-        },
-        (payload) => {
-          setBookings((prev) => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   const filteredBookings = bookings.filter((booking) => {
     const content = (booking.content || '').toLowerCase();
@@ -85,7 +18,8 @@ export default function AdminBookings({ initialBookings, mode = 'book' }: { init
     const query = searchQuery.toLowerCase();
     return (
       booking.user_name.toLowerCase().includes(query) ||
-      (booking.posts?.title && booking.posts.title.toLowerCase().includes(query))
+      (booking.posts?.title && booking.posts.title.toLowerCase().includes(query)) ||
+      (booking.content && booking.content.toLowerCase().includes(query))
     );
   });
 

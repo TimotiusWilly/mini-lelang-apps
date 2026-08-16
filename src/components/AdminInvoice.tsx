@@ -1,49 +1,14 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
 import { updateInvoiceStatus } from '@/app/actions/admin';
 import { Loader2, CheckCircle, Clock } from 'lucide-react';
 
-export default function AdminInvoice({ initialBookings }: { initialBookings: any[] }) {
-  const [bookings, setBookings] = useState(initialBookings);
+export default function AdminInvoice({ bookings }: { bookings: any[] }) {
   const [loadingUser, setLoadingUser] = useState<string | null>(null);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('admin_invoices')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'comments' },
-        async (payload) => {
-          const newComment = payload.new;
-          const { data: postData } = await supabase
-            .from('posts')
-            .select('title, image_url, base_price')
-            .eq('id', newComment.post_id)
-            .single();
-
-          if (postData) {
-            setBookings((prev) => [{ ...newComment, posts: postData }, ...prev]);
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'comments' },
-        (payload) => setBookings((prev) => prev.filter(b => b.id !== payload.old.id))
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'comments' },
-        (payload) => setBookings((prev) => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b))
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, []);
 
   const confirmedItems = useMemo(() => {
     // Urutkan semua booking dari yang paling awal (terlama) untuk mencari siapa yang pertama book
