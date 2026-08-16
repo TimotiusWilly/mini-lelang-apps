@@ -8,6 +8,19 @@
   --foreground: #000000;
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.1);
+  --grid-color: rgba(0, 0, 0, 0.08);
+  --glow-top: rgba(186, 230, 253, 0.5);
+  --glow-bottom: rgba(224, 242, 254, 0.6);
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --glass-bg: rgba(9, 9, 11, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --grid-color: rgba(255, 255, 255, 0.06);
+  --glow-top: rgba(2, 6, 23, 0.5);
+  --glow-bottom: rgba(15, 23, 42, 0.6);
 }
 
 @theme inline {
