@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   description: "Platform lelang dan titip jual barang koleksi.",
   icons: {
     icon: "/logo.jpg",
-  }
+  },
+  verification: {
+    google: "wLKWdZ5QETH06GF7_4ZQmRJ3PXaDsEUju1wCJF4rTeM",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
