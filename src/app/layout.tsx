@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Willy Consign | Live Auction",
+  title: "Willy Consign | HotWheels Stock",
   description: "Platform lelang dan titip jual barang koleksi.",
   icons: {
     icon: "/logo.jpg",
