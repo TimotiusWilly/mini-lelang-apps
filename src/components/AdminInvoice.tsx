@@ -156,6 +156,7 @@ export default function AdminInvoice({ bookings }: { bookings: any[] }) {
                                     fill 
                                     className="object-cover"
                                     sizes="48px"
+                                    unoptimized
                                   />
                                 )}
                               </div>

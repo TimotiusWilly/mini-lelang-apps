@@ -224,7 +224,7 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
             
             <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center gap-3">
               <div className="relative w-12 h-16 rounded overflow-hidden shrink-0">
-                <Image src={manualMarkPost.image_url} alt="Item" fill className="object-cover" sizes="48px" />
+                <Image src={manualMarkPost.image_url} alt="Item" fill className="object-cover" sizes="48px" unoptimized />
               </div>
               <div>
                 <div className="font-semibold text-sm line-clamp-2">{manualMarkPost.title}</div>
@@ -332,6 +332,7 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
                         fill 
                         className="object-cover"
                         sizes="48px"
+                        unoptimized
                       />
                     </div>
                   </td>

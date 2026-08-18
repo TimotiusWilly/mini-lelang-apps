@@ -98,6 +98,7 @@ export default function AdminBookings({ bookings, mode = 'book' }: { bookings: a
                               fill 
                               className="object-cover"
                               sizes="48px"
+                              unoptimized
                             />
                           )}
                         </div>
