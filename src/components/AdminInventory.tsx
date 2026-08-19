@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { updatePost, addPost, markItemAsSoldManually, cancelManualSold, deletePost } from '@/app/actions/admin';
+import { updatePost, addPost, markItemAsSoldManually, cancelManualSold, deletePost, deletePosts } from '@/app/actions/admin';
 import { Save, Loader2, CheckSquare, X, Trash2 } from 'lucide-react';
 
 export default function AdminInventory({ initialPosts, initialUsers = [] }: { initialPosts: any[], initialUsers?: any[] }) {
