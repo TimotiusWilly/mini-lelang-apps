@@ -138,7 +138,7 @@ export default async function Home() {
               <p className="text-sm text-gray-400 mt-2">Jalankan query SQL di Supabase dari file <code className="bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded">schema.sql</code> untuk menambahkan data dummy.</p>
             </div>
           ) : (
-            <ClientPostGrid posts={displayPosts} userName={userName} userPhone={userPhone} />
+            <ClientPostGrid posts={displayPosts} userName={userName} userPhone={userPhone} isAdmin={userName === 'WillyAdmin'} />
           )}
         </main>
       </div>

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { updatePost, addPost, markItemAsSoldManually } from '@/app/actions/admin';
-import { Save, Loader2, CheckSquare, X } from 'lucide-react';
+import { updatePost, addPost, markItemAsSoldManually, cancelManualSold, deletePost } from '@/app/actions/admin';
+import { Save, Loader2, CheckSquare, X, Trash2 } from 'lucide-react';
 
 export default function AdminInventory({ initialPosts, initialUsers = [] }: { initialPosts: any[], initialUsers?: any[] }) {
   const [posts, setPosts] = useState(initialPosts);
@@ -19,6 +19,10 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
   const [manualUserPhone, setManualUserPhone] = useState('');
   const [manualPrice, setManualPrice] = useState<number | ''>('');
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
+
+  // Bulk Delete State
+  const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,6 +69,50 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
     }));
   };
 
+  const handleCancelManualSold = async (postId: string) => {
+    if (!window.confirm('Batalkan status Offline Sold untuk barang ini?')) return;
+    
+    setSavingId(postId);
+    try {
+      const res = await cancelManualSold(postId);
+      if (res.error) {
+        alert(res.error);
+      } else {
+        // Optimistic UI update
+        setPosts(posts.map(p => {
+          if (p.id === postId) {
+            return { ...p, status: 'OPEN' };
+          }
+          return p;
+        }));
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat membatalkan');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    if (!window.confirm('PERINGATAN: Yakin ingin MENGHAPUS barang ini secara permanen? Data komentar juga akan ikut terhapus.')) return;
+    
+    setSavingId(postId);
+    try {
+      const res = await deletePost(postId);
+      if (res.error) {
+        alert(res.error);
+      } else {
+        alert('Barang berhasil dihapus');
+        // Optimistic UI update
+        setPosts(posts.filter(p => p.id !== postId));
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat menghapus');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const handleManualSoldSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualMarkPost || !manualUserName || manualPrice === '') return;
@@ -84,12 +132,56 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
       } else {
         alert('Barang berhasil ditandai terjual!');
         setManualMarkPost(null);
-        window.location.reload(); // Refresh to update status
+        // Optimistic UI update instead of reloading
+        setPosts(posts.map(p => {
+          if (p.id === manualMarkPost.id) {
+            return { ...p, status: 'BOOKED' };
+          }
+          return p;
+        }));
       }
     } catch (err) {
       alert('Terjadi kesalahan saat menandai barang');
     } finally {
       setIsSubmittingManual(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPostIds.length === filteredPosts.length && filteredPosts.length > 0) {
+      setSelectedPostIds([]);
+    } else {
+      setSelectedPostIds(filteredPosts.map(p => p.id));
+    }
+  };
+
+  const toggleSelectPost = (postId: string) => {
+    setSelectedPostIds(prev => 
+      prev.includes(postId) 
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedPostIds.length === 0) return;
+    if (!window.confirm(`PERINGATAN: Yakin ingin MENGHAPUS ${selectedPostIds.length} barang terpilih secara permanen?`)) return;
+    
+    setIsBulkDeleting(true);
+    try {
+      const res = await deletePosts(selectedPostIds);
+      if (res.error) {
+        alert(res.error);
+      } else {
+        alert(`${selectedPostIds.length} barang berhasil dihapus`);
+        // Optimistic UI update
+        setPosts(posts.filter(p => !selectedPostIds.includes(p.id)));
+        setSelectedPostIds([]);
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat menghapus');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -123,6 +215,16 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
             >
               {isAdding ? 'Batal Tambah' : '+ Tambah Barang Baru'}
             </button>
+            {selectedPostIds.length > 0 && (
+              <button 
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-opacity flex items-center gap-2"
+              >
+                {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Hapus ({selectedPostIds.length})
+              </button>
+            )}
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
@@ -307,6 +409,14 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
           <table className="w-full min-w-[800px] text-left text-sm border-collapse">
           <thead className="sticky top-0 bg-white dark:bg-black z-10 shadow-[0_1px_0_rgba(0,0,0,0.1)] dark:shadow-[0_1px_0_rgba(255,255,255,0.1)]">
             <tr className="text-gray-500">
+              <th className="pb-3 px-4 w-10">
+                <input 
+                  type="checkbox" 
+                  checked={filteredPosts.length > 0 && selectedPostIds.length === filteredPosts.length}
+                  onChange={toggleSelectAll}
+                  className="rounded border-gray-300 dark:border-gray-700 cursor-pointer w-4 h-4 accent-black dark:accent-white"
+                />
+              </th>
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Barang</th>
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Nama (Bisa diedit)</th>
               <th className="pb-3 px-4 font-semibold uppercase tracking-wider text-xs whitespace-nowrap">Status</th>
@@ -317,13 +427,21 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
           <tbody className="divide-y divide-gray-100 dark:divide-gray-900">
             {filteredPosts.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-8 text-center text-gray-400">
+                <td colSpan={6} className="py-8 text-center text-gray-400">
                   {searchQuery ? 'Tidak ada barang yang cocok dengan pencarian.' : 'Belum ada barang.'}
                 </td>
               </tr>
             ) : (
               filteredPosts.map((post) => (
                 <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                  <td className="py-3 px-4">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedPostIds.includes(post.id)}
+                      onChange={() => toggleSelectPost(post.id)}
+                      className="rounded border-gray-300 dark:border-gray-700 cursor-pointer w-4 h-4 accent-black dark:accent-white"
+                    />
+                  </td>
                   <td className="py-3 px-4 w-20">
                     <div className="relative w-12 h-16 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0 transition-all duration-300 hover:scale-[8] hover:z-50 hover:shadow-2xl z-10 relative origin-left hover:-translate-y-4 cursor-zoom-in border border-transparent hover:border-white/50">
                       <Image 
@@ -397,6 +515,26 @@ export default function AdminInventory({ initialPosts, initialUsers = [] }: { in
                           Offline Sold
                         </button>
                       )}
+                      
+                      {post.status === 'BOOKED' && (
+                        <button
+                          onClick={() => handleCancelManualSold(post.id)}
+                          disabled={savingId === post.id}
+                          className="flex items-center justify-center bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800 rounded px-4 py-1.5 text-xs font-bold transition-colors w-full disabled:opacity-50"
+                        >
+                          {savingId === post.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <X className="w-3.5 h-3.5 mr-1.5" />}
+                          Batal Offline
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDelete(post.id)}
+                        disabled={savingId === post.id}
+                        className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded px-4 py-1.5 text-xs font-bold transition-colors w-full mt-2 disabled:opacity-50"
+                      >
+                        {savingId === post.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
+                        Hapus Barang
+                      </button>
                     </div>
                   </td>
                 </tr>

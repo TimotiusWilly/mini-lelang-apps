@@ -35,10 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="w-full bg-red-600 text-white p-3 text-center text-sm md:text-base font-bold shadow-md z-50 fixed top-0 left-0">
-            ⚠️ PEMBERITAHUAN: Website sedang dalam masa perbaikan (maintenance) karena kendala teknis. Mohon maaf atas ketidaknyamanannya.
-          </div>
-          <div className="pt-12 md:pt-14 flex-1 flex flex-col blur-md pointer-events-none select-none opacity-50 transition-all duration-500">
+          <div className="flex-1 flex flex-col">
             {children}
           </div>
           <ThemeToggle />

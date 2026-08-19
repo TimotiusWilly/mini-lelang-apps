@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Missing Supabase credentials in .env.local");
@@ -47,9 +47,8 @@ async function processImages() {
         const destFilename = `${filenameWithoutExt}.webp`;
         const destPath = path.join(DEST_DIR, destFilename);
         
-        // 1. Convert to webp with 90 degree clockwise rotation
+        // 1. Convert to webp
         await sharp(sourcePath)
-          .rotate(90) // Force 90 degree rotation
           .webp({ quality: 80 })
           .toFile(destPath);
 
