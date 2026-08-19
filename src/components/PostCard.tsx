@@ -80,6 +80,7 @@ export default function PostCard({
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            unoptimized
           />
           {isAdmin && (
             <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20 flex flex-col gap-2">
@@ -149,6 +150,7 @@ export default function PostCard({
                 fill
                 className="object-contain drop-shadow-[0_0_50px_rgba(0,0,0,0.5)]"
                 sizes="80vw"
+                unoptimized
               />
            </div>
         </div>
@@ -167,6 +169,7 @@ export default function PostCard({
               fill
               className="object-contain"
               sizes="100vw"
+              unoptimized
             />
           </div>
         </div>
