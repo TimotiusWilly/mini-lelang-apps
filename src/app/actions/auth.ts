@@ -176,3 +176,44 @@ export async function getUserPhone() {
   const session = await verifySession();
   return session?.phone || null;
 }
+
+export async function resetPassword(formData: FormData) {
+  const name = formData.get('name') as string;
+  const phone = formData.get('phone') as string;
+  const password = formData.get('password') as string;
+
+  if (!name || !phone || !password) {
+    return { error: 'Nama Pengguna, Nomor HP, dan Password Baru wajib diisi.' };
+  }
+
+  if (password.length < 6) {
+    return { error: 'Password baru minimal 6 karakter.' };
+  }
+
+  // Check if user exists with EXACT matching name and phone
+  const { data: user, error: findError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('name', name)
+    .eq('phone', phone)
+    .single();
+
+  if (findError || !user) {
+    return { error: 'Kombinasi Nama Pengguna dan Nomor HP tidak ditemukan.' };
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Update password in db
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({ password: hashedPassword })
+    .eq('id', user.id);
+
+  if (updateError) {
+    return { error: 'Terjadi kesalahan sistem saat mereset password.' };
+  }
+
+  return { success: true };
+}
