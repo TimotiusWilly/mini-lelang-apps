@@ -42,7 +42,7 @@ export default async function AdminDashboard() {
     }
   }
 
-  const enhancedPosts = (posts || []).map(p => ({
+  const enhancedPosts = (posts || []).map((p: any) => ({
     ...p,
     status: postWinners.has(p.id) ? 'BOOKED' : 'OPEN'
   }));

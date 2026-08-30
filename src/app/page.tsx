@@ -115,8 +115,8 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 font-bold text-lg md:text-xl">
              <span className="text-gray-400 dark:text-gray-500 line-through decoration-red-500 decoration-[3px]" title="Harga Retail Gantungan">Rp 34.900</span>
              <span className="hidden sm:inline text-gray-400">👉</span>
-             <span className="text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40 px-4 py-1.5 rounded-full border border-green-200 dark:border-green-800 shadow-sm">
-               Mulai Rp 10.000 - 20.000 aja! 🤪
+             <span className="text-black dark:text-white">
+               Mulai Rp 10.000 - 20.000 aja!
              </span>
           </div>
           <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">

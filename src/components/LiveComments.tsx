@@ -39,11 +39,11 @@ export default function LiveComments({ postId, userName, userPhone }: { postId: 
       const payload = customEvent.detail;
       
       if (payload.eventType === 'INSERT' && payload.new.post_id === postId) {
-        setComments((prev) => [...prev, payload.new as Comment]);
+        setComments((prev: Comment[]) => [...prev, payload.new as Comment]);
       } else if (payload.eventType === 'DELETE' && payload.old) {
-        setComments((prev) => prev.filter(c => c.id !== payload.old.id));
+        setComments((prev: Comment[]) => prev.filter((c: Comment) => c.id !== payload.old.id));
       } else if (payload.eventType === 'UPDATE' && payload.new.post_id === postId) {
-        setComments((prev) => prev.map(c => c.id === payload.new.id ? (payload.new as Comment) : c));
+        setComments((prev: Comment[]) => prev.map((c: Comment) => c.id === payload.new.id ? (payload.new as Comment) : c));
       }
     };
 
@@ -78,8 +78,8 @@ export default function LiveComments({ postId, userName, userPhone }: { postId: 
   };
 
   // Determine actual winner
-  const explicitWinner = comments.find(c => c.is_winner);
-  const firstBook = comments.find(c => {
+  const explicitWinner = comments.find((c: Comment) => c.is_winner);
+  const firstBook = comments.find((c: Comment) => {
     const text = c.content.toLowerCase();
     return /\b(book|buk|b)\b/.test(text);
   });
@@ -93,7 +93,7 @@ export default function LiveComments({ postId, userName, userPhone }: { postId: 
         className="flex-1 overflow-y-auto space-y-3 pr-2 scroll-smooth"
       >
         <AnimatePresence>
-          {comments.map((comment) => {
+          {comments.map((comment: Comment) => {
             const isWinner = comment.id === winnerId;
             
             return (
@@ -156,7 +156,7 @@ export default function LiveComments({ postId, userName, userPhone }: { postId: 
             <input 
               type="text" 
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={(e: any) => setNewComment(e.target.value)}
               placeholder="Ketik 'book' atau 'nego 50k'"
               className="flex-1 w-full text-[9px] md:text-sm px-1.5 md:px-4 py-1.5 md:py-2 rounded border border-gray-200 dark:border-gray-800 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white transition-all"
             />
