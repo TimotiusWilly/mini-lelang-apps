@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getUser, getUserPhone, logout } from '@/app/actions/auth';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { GridBackground } from '@/components/ui/GridBackground';
 import Image from 'next/image';
@@ -114,7 +114,7 @@ export default async function Home() {
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 font-bold text-lg md:text-xl">
              <span className="text-gray-400 dark:text-gray-500 line-through decoration-red-500 decoration-[3px]" title="Harga Retail Gantungan">Rp 34.900</span>
-             <span className="hidden sm:inline text-gray-400">👉</span>
+             <ArrowRight className="hidden sm:inline w-5 h-5 text-gray-400" />
              <span className="text-black dark:text-white">
                Mulai Rp 10.000 - 20.000 aja!
              </span>
