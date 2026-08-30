@@ -147,6 +147,7 @@ export default async function MyInvoicePage() {
                               fill
                               className="object-cover"
                               sizes="96px"
+                              unoptimized
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-400"><Package className="w-8 h-8" /></div>
